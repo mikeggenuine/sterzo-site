@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E1A24">
+<meta property="og:title" content="Sterzo Systems">
+<meta property="og:description" content="Dealer software, built by a dealer. Ruota, Rifinito, Stima and Valvola.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230E1A24'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%23fff' stroke-width='6'/%3E%3Cpath d='M32 12v-8' stroke='%232547D0' stroke-width='6'/%3E%3C/svg%3E">
+<title>Sterzo Systems</title>
+<meta name="description" content="Sterzo Systems builds software for independent used-car dealers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a vehicle data plate. Huge stamped headline left, a slowly turning wheel cropped at the right edge, then product "plates", a roadmap strip, three house rules, and one contact block. */
+:root{
+  --bg:#EFF0EC; --surface:#FAFAF8; --plate:#E3E6E2; --fg:#0E1A24; --muted:#55636E; --line:#CBD1CE;
+  --accent:#2547D0; --accent-fg:#FFFFFF; --wheel:#0E1A24;
+  --live:#0F7A57; --dev:#8F6200; --plan:#55636E;
+  --display:'Big Shoulders Display','Arial Narrow',Impact,sans-serif;
+  --body:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0A1118; --surface:#101A23; --plate:#0E1720; --fg:#E7EDF0; --muted:#8C9DA8; --line:#223140;
+  --accent:#8AA2FF; --accent-fg:#0A1118; --wheel:#E7EDF0;
+  --live:#4FD1A1; --dev:#E5B54A; --plan:#8C9DA8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A1118; --surface:#101A23; --plate:#0E1720; --fg:#E7EDF0; --muted:#8C9DA8; --line:#223140;
+  --accent:#8AA2FF; --accent-fg:#0A1118; --wheel:#E7EDF0;
+  --live:#4FD1A1; --dev:#E5B54A; --plan:#8C9DA8; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.55;margin:0;overflow-x:hidden}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* nav */
+nav{display:flex;justify-content:space-between;align-items:center;padding-block:22px;position:relative;z-index:3}
+.mark{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:.14em;text-decoration:none;text-transform:uppercase}
+.mark i{font-style:normal;color:var(--accent)}
+nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0}
+nav a.l{font-family:var(--mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:var(--muted)}
+nav a.l:hover{color:var(--fg)}
+@media(max-width:560px){nav ul li:not(:last-child){display:none}}
+
+/* hero */
+.hero{position:relative;padding-block:56px 84px;overflow:hidden}
+.hero .wrap{position:relative;z-index:2}
+.eyebrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 26px}
+.eyebrow b{width:34px;height:2px;background:var(--accent);display:inline-block}
+h1{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:clamp(3.6rem,11.5vw,9.6rem);line-height:.86;letter-spacing:-.005em;margin:0;max-width:11ch;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:34rem;font-size:1.18rem;margin:30px 0 0;color:var(--fg)}
+.cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}
+.btn{font-family:var(--mono);font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;padding:15px 22px;border:1.5px solid var(--fg);display:inline-block}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn:hover{transform:translateY(-1px)}
+.wheel{position:absolute;right:-16vw;top:50%;width:min(78vw,760px);aspect-ratio:1;translate:0 -50%;color:var(--wheel);opacity:.95;z-index:1;pointer-events:none}
+.wheel svg{width:100%;height:100%;display:block;will-change:transform}
+@media(max-width:820px){.wheel{right:-38vw;width:112vw;opacity:.13}}
+
+/* data plate */
+.plate{margin-top:56px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1.5px solid var(--fg);background:var(--surface);max-width:780px}
+.plate div{padding:14px 18px;border-right:1px solid var(--line);min-width:0}
+.plate div:last-child{border-right:0}
+.plate dt{margin:0 0 4px}
+.plate dd{margin:0;font-weight:600;font-size:.98rem;overflow-wrap:anywhere}
+@media(max-width:680px){.plate{grid-template-columns:repeat(2,minmax(0,1fr))}.plate div:nth-child(2){border-right:0}.plate div:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+
+/* sections */
+section{padding-block:84px;border-top:1px solid var(--line)}
+.sec-head{display:grid;grid-template-columns:200px minmax(0,1fr);gap:24px;margin-bottom:46px}
+.sec-head h2{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:clamp(2.2rem,5vw,3.8rem);line-height:.95;margin:0;max-width:18ch;text-wrap:balance}
+.sec-head p{margin:14px 0 0;max-width:36rem;color:var(--muted)}
+@media(max-width:760px){.sec-head{grid-template-columns:1fr;gap:12px}}
+
+/* products */
+.prods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media(max-width:760px){.prods{grid-template-columns:1fr}}
+.prod{background:var(--surface);border:1.5px solid var(--fg);padding:26px 24px 24px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.prod .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border:1px solid currentColor;border-radius:99px}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.chip.live{color:var(--live)} .chip.dev{color:var(--dev)}
+.prod h3{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:3.6rem;line-height:.9;margin:6px 0 0;letter-spacing:.01em}
+.gloss{font-family:var(--mono);font-size:.74rem;color:var(--muted);margin:0}
+.prod p.what{margin:0;font-weight:500}
+.prod ul{margin:4px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--line);padding-top:16px;font-size:.96rem}
+.prod li{display:grid;grid-template-columns:18px minmax(0,1fr);gap:6px}
+.prod li::before{content:"";width:9px;height:2px;background:var(--accent);margin-top:.8em}
+.prod.ghost{background:transparent;border-style:dashed;border-color:var(--muted)}
+.prod .foot{margin-top:auto;padding-top:6px;color:var(--muted);font-size:.9rem}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1.5px solid var(--fg);background:var(--surface)}
+.road>div{padding:26px 24px;border-right:1px solid var(--line);min-width:0}
+.road>div:last-child{border-right:0}
+.road h3{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:2rem;margin:8px 0 14px;line-height:1}
+.road ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:.96rem}
+.road li{padding-left:16px;position:relative}
+.road li::before{content:"";position:absolute;left:0;top:.7em;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.road>div:nth-child(2) li::before{background:transparent;border:1.5px solid var(--accent)}
+.road>div:nth-child(3) li::before{background:transparent;border:1.5px dashed var(--muted)}
+.road-note{margin:16px 0 0;color:var(--muted);font-size:.9rem}
+@media(max-width:820px){.road{grid-template-columns:1fr}.road>div{border-right:0;border-bottom:1px solid var(--line)}.road>div:last-child{border-bottom:0}}
+
+/* one platform */
+.one{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:48px;align-items:center}
+@media(max-width:860px){.one{grid-template-columns:1fr;gap:34px}}
+.hub{border:1.5px solid var(--fg);background:var(--surface);padding:14px;min-width:0;margin:0}
+.hub svg{width:100%;height:auto;display:block}
+.hub .ln{stroke:var(--muted);stroke-width:1.6;stroke-dasharray:6 6;fill:none}
+.hub .core{fill:var(--accent)}
+.hub .core-t{fill:var(--accent-fg);font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:.06em;text-anchor:middle;text-transform:uppercase}
+.hub .core-s{fill:var(--accent-fg);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-anchor:middle}
+.hub .node{fill:var(--bg);stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4}
+.hub .nt{fill:var(--fg);font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.06em;text-anchor:middle;text-transform:uppercase}
+.hub .ns{fill:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-anchor:middle;text-transform:uppercase}
+.hub figcaption{font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;color:var(--muted);margin:10px 4px 0}
+.one-copy p{margin:0 0 18px;max-width:34rem}
+.one-copy p.big{font-size:1.2rem;font-weight:500}
+.pts{list-style:none;margin:26px 0 0;padding:0;display:flex;flex-direction:column;gap:16px}
+.pts li{border-top:1px solid var(--line);padding-top:14px}
+.pts b{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1.35rem;letter-spacing:.03em;display:block;line-height:1.1;margin-bottom:4px}
+.pts span{color:var(--muted);font-size:.96rem}
+
+/* build tiles */
+.build{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1.5px solid var(--fg)}
+@media(max-width:640px){.build{grid-template-columns:1fr}}
+.tile{background:var(--surface);padding:24px 22px 26px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.tile h3{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:1.75rem;line-height:1;margin:0;letter-spacing:.02em}
+.tile p{margin:0;font-size:.96rem;color:var(--muted)}
+.tile .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.tile .rule-line{margin-top:auto;padding-top:10px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--fg)}
+
+/* rules */
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px}
+@media(max-width:820px){.rules{grid-template-columns:1fr;gap:30px}}
+.rules h3{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:2.1rem;line-height:.98;margin:0 0 10px}
+.rules p{margin:0;color:var(--muted)}
+.rules .rule{border-top:3px solid var(--fg);padding-top:16px}
+
+/* names */
+.names{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:56px}
+.names div{padding:18px 16px 18px 0;min-width:0}
+.names b{font-family:var(--display);font-size:1.7rem;letter-spacing:.06em;text-transform:uppercase;display:block;line-height:1.1}
+.names span{font-family:var(--mono);font-size:.74rem;color:var(--muted)}
+
+/* contact */
+.contact{background:var(--fg);color:var(--bg);border-top:0}
+.contact .mono{color:var(--bg);opacity:.65}
+.contact h2{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:clamp(3rem,9vw,7.4rem);line-height:.88;margin:18px 0 0;max-width:12ch;text-wrap:balance}
+.contact p{max-width:32rem;font-size:1.1rem;margin:26px 0 0;opacity:.88}
+.mail{margin-top:34px;display:flex;gap:12px;flex-wrap:wrap;align-items:stretch}
+.addr{font-family:var(--mono);font-size:clamp(1.05rem,3.6vw,1.6rem);padding:14px 20px;border:1.5px solid var(--bg);user-select:all;overflow-wrap:anywhere;min-width:0}
+.copy{font-family:var(--mono);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;background:var(--bg);color:var(--fg);border:0;padding:0 22px;cursor:pointer;min-height:52px}
+.copy:hover{opacity:.9}
+.mailto{margin-top:16px;display:inline-block;color:var(--bg);font-size:.95rem;opacity:.8}
+
+footer{background:var(--fg);color:var(--bg);padding-block:30px 40px;border-top:1px solid color-mix(in srgb,var(--bg) 22%,transparent)}
+footer .wrap{display:flex;justify-content:space-between;gap:14px 30px;flex-wrap:wrap;font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;opacity:.72}
+
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn:hover{transform:none}}
+</style>
+</head>
+<body>
+
+
+<header class="wrap">
+  <nav aria-label="Main">
+    <a class="mark" href="#top">Sterzo<i>.</i></a>
+    <ul>
+      <li><a class="l" href="#products">Products</a></li>
+      <li><a class="l" href="#one">The plan</a></li>
+      <li><a class="l" href="#road">Roadmap</a></li>
+      <li><a class="l" href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wheel" aria-hidden="true">
+      <svg id="wheel" viewBox="-300 -300 600 600" fill="none" stroke="currentColor">
+        <circle r="286" stroke-width="2"/>
+        <circle r="248" stroke-width="22"/>
+        <circle r="206" stroke-width="1"/>
+        <g id="ticks" stroke-width="2"></g>
+        <path d="M-206 0 H-44 M206 0 H44 M0 206 V44" stroke-width="16" stroke-linecap="butt"/>
+        <circle r="46" stroke-width="3"/>
+        <circle r="10" fill="currentColor" stroke="none"/>
+        <path d="M0 -206 L0 -270" stroke="var(--accent)" stroke-width="10"/>
+      </svg>
+    </div>
+
+    <div class="wrap">
+      <p class="eyebrow mono"><b></b>Sterzo Systems, LLC · Florida</p>
+      <h1>Dealer software, built by a <em>dealer.</em></h1>
+      <p class="lede">We make the tools an independent used-car lot uses every day. A CRM and a reconditioning tracker today, with valuation and service in development. The plan is to join them into one system for the whole dealership.</p>
+      <div class="cta">
+        <a class="btn pri" href="#contact">Say hello</a>
+        <a class="btn" href="#products">See what we make</a>
+      </div>
+      <dl class="plate" aria-label="Company details">
+        <div><dt class="mono">Company</dt><dd>Sterzo Systems, LLC</dd></div>
+        <div><dt class="mono">Founded</dt><dd>2026</dd></div>
+        <div><dt class="mono">Based</dt><dd>Florida, USA</dd></div>
+        <div><dt class="mono">Products</dt><dd>4</dd></div>
+      </dl>
+    </div>
+  </div>
+
+  <section id="products">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="mono">What we make</div>
+        <div>
+          <h2>Four tools. Each one marked with where it really stands.</h2>
+          <p>Status labels are literal. If it says in development, you cannot use it yet.</p>
+        </div>
+      </div>
+
+      <div class="prods">
+        <article class="prod">
+          <div class="top"><span class="mono">01 · CRM</span><span class="chip live">Live</span></div>
+          <h3>Ruota</h3>
+          <p class="gloss">ruota (it.) the wheel</p>
+          <p class="what">A customer and inventory CRM for independent dealers. It keeps every shopper, every car and every follow-up in one place.</p>
+          <ul>
+            <li>A wanted list that records what shoppers are looking for</li>
+            <li>“Who wants this car” matches a vehicle to shoppers already waiting</li>
+            <li>A board that shows where every lead stands</li>
+            <li>Your dealership website, hosted by us and fed by your inventory</li>
+          </ul>
+          <p class="foot">Opening to a small group of pilot dealers.</p>
+        </article>
+
+        <article class="prod">
+          <div class="top"><span class="mono">02 · Reconditioning</span><span class="chip live">Live · in daily use</span></div>
+          <h3>Rifinito</h3>
+          <p class="gloss">rifinito (it.) finished, refined</p>
+          <p class="what">Check-in and reconditioning for the lot. It follows each car from the day it arrives to the day it is ready to sell.</p>
+          <ul>
+            <li>Check a car in the day it arrives</li>
+            <li>See reconditioning progress car by car</li>
+          </ul>
+          <p class="foot">Used on our own lot every day.</p>
+        </article>
+
+        <article class="prod ghost">
+          <div class="top"><span class="mono">03 · Valuation</span><span class="chip dev">In development</span></div>
+          <h3>Stima</h3>
+          <p class="gloss">stima (it.) estimate</p>
+          <p class="what">A tool for valuing the cars you take in. It is not connected to Ruota yet and you cannot use it today.</p>
+          <p class="foot">We will say here when that changes.</p>
+        </article>
+
+        <article class="prod ghost">
+          <div class="top"><span class="mono">04 · Service</span><span class="chip dev">In development</span></div>
+          <h3>Valvola</h3>
+          <p class="gloss">valvola (it.) valve</p>
+          <p class="what">Service department software for a shop or a dealership: repair orders, technician inspections and customer approvals. It is being designed now and you cannot use it today.</p>
+          <p class="foot">Meant to run on its own or alongside the rest.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="one">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="mono">The plan</div>
+        <div>
+          <h2>One system for the whole dealership.</h2>
+          <p>This is the direction we are building toward. It is a plan, and the diagram shows connections we have not finished.</p>
+        </div>
+      </div>
+
+      <div class="one">
+        <div class="one-copy">
+          <p class="big">A dealership runs sales, service, reconditioning and appraisals in separate programs that do not talk to each other. Staff retype the same customer and the same car again and again.</p>
+          <p>We plan to bring all of it into one platform. Ruota sits in the middle as the record of every customer and every car, and the other tools connect to it. We build it with AI coding agents, so every part is written to fit the rest.</p>
+          <ul class="pts">
+            <li><b>One record</b><span>A customer and a car are entered once and follow the deal from the first lead to the service lane.</span></li>
+            <li><b>Agents do the busywork</b><span>Drafting follow-ups, summarizing a day and flagging a car that has sat too long. A person approves every action and a person sends every message.</span></li>
+            <li><b>Take what you need</b><span>Use one piece on its own or put several together. A shop with only a service department should not have to buy a sales system.</span></li>
+          </ul>
+        </div>
+
+        <figure class="hub" aria-label="Diagram: Ruota at the center, connected to Rifinito, Stima and Valvola">
+          <svg viewBox="0 0 600 400" aria-hidden="true">
+            <path class="ln" d="M300 200 L110 80"/>
+            <path class="ln" d="M300 200 L490 80"/>
+            <path class="ln" d="M300 200 L300 330"/>
+            <circle class="core" cx="300" cy="200" r="64"/>
+            <text class="core-t" x="300" y="203">Ruota</text>
+            <text class="core-s" x="300" y="224">CRM</text>
+            <rect class="node" x="30" y="46" width="160" height="68"/>
+            <text class="nt" x="110" y="78">Rifinito</text>
+            <text class="ns" x="110" y="98">Reconditioning</text>
+            <rect class="node" x="410" y="46" width="160" height="68"/>
+            <text class="nt" x="490" y="78">Stima</text>
+            <text class="ns" x="490" y="98">Valuation</text>
+            <rect class="node" x="220" y="322" width="160" height="68"/>
+            <text class="nt" x="300" y="354">Valvola</text>
+            <text class="ns" x="300" y="374">Service</text>
+          </svg>
+          <figcaption>Dashed lines are connections we plan to build.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="build">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="mono">What we are building toward</div>
+        <div>
+          <h2>Helpers for every corner of the lot.</h2>
+          <p>Some of this works today. Most of it is planned. Each tile says which. A person approves every message, post, listing and ad.</p>
+        </div>
+      </div>
+
+      <div class="build">
+        <article class="tile">
+          <div class="top"><span class="mono">Websites</span><span class="chip live">Live</span></div>
+          <h3>Hosted dealer websites</h3>
+          <p>We can host your dealership's website too. Your inventory shows up on it from Ruota, and every form fill lands in your CRM as a lead.</p>
+          <div class="rule-line">One place for site and leads</div>
+        </article>
+
+        <article class="tile">
+          <div class="top"><span class="mono">AI Sales</span><span class="chip dev">Partly live</span></div>
+          <h3>Who to call first</h3>
+          <p>Scores each lead, explains why, and suggests the next step. Call lists and after-hours drafts are planned.</p>
+          <div class="rule-line">A person sends every reply</div>
+        </article>
+
+        <article class="tile">
+          <div class="top"><span class="mono">Buyer</span><span class="chip dev">Planned</span></div>
+          <h3>What to buy next</h3>
+          <p>A buy list built from what your shoppers keep asking for, with where to look for it, such as auctions, other dealers and private sellers.</p>
+          <div class="rule-line">You place every bid</div>
+        </article>
+
+        <article class="tile">
+          <div class="top"><span class="mono">Meta</span><span class="chip dev">Planned</span></div>
+          <h3>Facebook and Instagram</h3>
+          <p>Posts and car-specific ads on Meta's platforms, built around Meta's advertising and AI tools, inside a monthly limit the dealer sets. An ad pauses when the car sells.</p>
+          <div class="rule-line">A manager approves every ad</div>
+        </article>
+
+        <article class="tile">
+          <div class="top"><span class="mono">Marketplace</span><span class="chip dev">Planned</span></div>
+          <h3>Marketplace listings</h3>
+          <p>Fills in a Facebook Marketplace listing from the car's record, in your salesperson's own browser, and stops before Post. Replies come back as leads.</p>
+          <div class="rule-line">Your rep presses Post</div>
+        </article>
+
+        <article class="tile">
+          <div class="top"><span class="mono">Market</span><span class="chip dev">Planned</span></div>
+          <h3>Market tracking</h3>
+          <p>Watches what similar cars are asking and selling for around you, using licensed market data, so pricing and buying decisions start from facts.</p>
+          <div class="rule-line">Data you can name the source of</div>
+        </article>
+
+        <article class="tile">
+          <div class="top"><span class="mono">Campaigns</span><span class="chip dev">Planned</span></div>
+          <h3>Email to your own list</h3>
+          <p>New-arrival emails and follow-ups to shoppers who opted in, with an unsubscribe link on every one.</p>
+          <div class="rule-line">A person approves every send</div>
+        </article>
+
+        <article class="tile">
+          <div class="top"><span class="mono">Calls and texts</span><span class="chip dev">Planned</span></div>
+          <h3>Reach people fast</h3>
+          <p>Texting and voice follow-up for new and quiet leads, only after consent records, carrier registration and legal review are in place.</p>
+          <div class="rule-line">Off until a dealer switches it on</div>
+        </article>
+
+        <article class="tile">
+          <div class="top"><span class="mono">Moving over</span><span class="chip dev">Planned</span></div>
+          <h3>Bring your data with you</h3>
+          <p>Imports from the CRM you use today, so switching does not mean starting over.</p>
+          <div class="rule-line">Switching should not hurt</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="road">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="mono">Where we are going</div>
+        <div>
+          <h2>Small steps, in order, with no dates we cannot keep.</h2>
+        </div>
+      </div>
+
+      <div class="road">
+        <div>
+          <div class="mono">Now</div>
+          <h3>On the lot</h3>
+          <ul>
+            <li>Ruota and Rifinito running in a working dealership</li>
+            <li>Learning from the people who use them on a real day</li>
+          </ul>
+        </div>
+        <div>
+          <div class="mono">Next</div>
+          <h3>Pilot dealers</h3>
+          <ul>
+            <li>A small group of dealers on Ruota</li>
+            <li>Roles and account basics for staff</li>
+            <li>Data export for dealer admins</li>
+          </ul>
+        </div>
+        <div>
+          <div class="mono">Later</div>
+          <h3>Planned</h3>
+          <ul>
+            <li>Stima, connected to the cars you take in</li>
+            <li>Valvola for the service department</li>
+            <li>The tools joined into one system around Ruota</li>
+            <li>Drafted replies that a person always approves and sends</li>
+            <li>Texting with customer consent</li>
+            <li>Facebook and Instagram posts and ads, Marketplace listings and market tracking</li>
+          </ul>
+        </div>
+      </div>
+      <p class="road-note">Planned means planned. Nothing in the last two columns is available yet.</p>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="mono">What we want</div>
+        <div>
+          <h2>Software that works the way a lot works.</h2>
+          <p>We want independent dealers to have tools as good as the big groups use, built around how a small lot actually runs.</p>
+        </div>
+      </div>
+
+      <div class="rules">
+        <div class="rule">
+          <h3>A person sends. Always.</h3>
+          <p>Our tools can draft. A human approves it and a human sends it. Nothing goes to your customers on its own.</p>
+        </div>
+        <div class="rule">
+          <h3>Only what we can back up.</h3>
+          <p>No made-up numbers, no invented reviews, no claims about a car that nobody checked.</p>
+        </div>
+        <div class="rule">
+          <h3>Built where it is used.</h3>
+          <p>The people writing the software also work a dealership. If a screen is slow on a busy Saturday, we feel it first.</p>
+        </div>
+      </div>
+
+      <div class="names" aria-label="What the names mean">
+        <div><b>Sterzo</b><span>steering</span></div>
+        <div><b>Ruota</b><span>wheel</span></div>
+        <div><b>Rifinito</b><span>finished, refined</span></div>
+        <div><b>Stima</b><span>estimate</span></div>
+        <div><b>Valvola</b><span>valve</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="contact" id="contact">
+  <div class="wrap">
+    <div class="mono">Contact</div>
+    <h2>Run a lot? Let’s talk.</h2>
+    <p>Tell us about your dealership and what slows it down. A real person will reply.</p>
+    <div class="mail">
+      <div class="addr" id="addr">hello@sterzo.app</div>
+      <button class="copy" id="copy" type="button">Copy address</button>
+    </div>
+    <a class="mailto" href="mailto:hello@sterzo.app">Or open your email app</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Sterzo Systems, LLC</span>
+    <span>Ruota, Rifinito, Stima and Valvola are products of Sterzo Systems, LLC.</span>
+    <span>Meta, Facebook, Instagram and Marketplace are trademarks of Meta Platforms, Inc. Sterzo Systems is not affiliated with or endorsed by Meta.</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // wheel tick marks
+  var g=document.getElementById('ticks'),ns='http://www.w3.org/2000/svg',s='';
+  for(var i=0;i<72;i++){
+    var major=i%6===0,r1=286,r2=major?262:274,a=i*5*Math.PI/180;
+    s+='<line x1="'+(Math.sin(a)*r1).toFixed(2)+'" y1="'+(-Math.cos(a)*r1).toFixed(2)+'" x2="'+(Math.sin(a)*r2).toFixed(2)+'" y2="'+(-Math.cos(a)*r2).toFixed(2)+'" stroke-width="'+(major?3:1.5)+'"/>';
+  }
+  g.innerHTML=s;
+
+  // wheel turns with scroll; still if reduced motion
+  var w=document.getElementById('wheel'),mq=window.matchMedia('(prefers-reduced-motion: reduce)'),tick=false;
+  function turn(){tick=false;if(mq.matches){w.style.transform='';return}
+    w.style.transform='rotate('+(window.scrollY*0.12)+'deg)'}
+  window.addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(turn)}},{passive:true});
+  turn();
+
+  // copy address
+  var btn=document.getElementById('copy'),addr=document.getElementById('addr');
+  function sel(){var r=document.createRange();r.selectNodeContents(addr);var x=window.getSelection();x.removeAllRanges();x.addRange(r)}
+  btn.addEventListener('click',function(){
+    function ok(){btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy address'},1800)}
+    try{navigator.clipboard.writeText('hello@sterzo.app').then(ok,function(){sel();btn.textContent='Selected'})}
+    catch(e){sel();btn.textContent='Selected'}
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -104,13 +104,15 @@ h1 em{font-style:normal;color:var(--accent);text-shadow:0 0 28px rgba(138,162,25
 .note{margin:12px 0 0;font-size:.62rem;letter-spacing:.06em;text-align:center}
 
 @media(max-width:899px){
-  .field{grid-template-columns:1fr;gap:6px;align-content:start}
+  /* phones: the first screen is exactly one screen tall; the deck takes whatever height is left above the plates */
+  .stage{height:100vh;height:100svh;min-height:540px}
+  .field{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);gap:6px}
   .herotext{max-width:none}
   h1{font-size:clamp(2.1rem,9.6vw,3rem);max-width:12ch}
   .lede{font-size:.92rem;margin-top:12px;max-width:34rem}
   .cta{display:none}
   .eyebrow{margin-bottom:12px}
-  .slot{aspect-ratio:auto;height:min(35svh,340px);width:100%}
+  .slot{aspect-ratio:auto;height:100%;min-height:130px;max-height:340px;width:100%;align-self:center}
   .eb-x{display:none}
   .plates{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .plate{padding:11px 12px 10px;gap:4px}
@@ -119,7 +121,7 @@ h1 em{font-style:normal;color:var(--accent);text-shadow:0 0 28px rgba(138,162,25
   .plate .cat{display:none}
   .note{text-align:left;margin-top:8px}
 }
-@media(max-height:700px) and (max-width:899px){.lede{display:none}.slot{height:34svh}}
+@media(max-height:760px) and (max-width:899px){.lede{display:none}}
 @media(max-width:899px){.hint .long{display:none}}
 
 /* dossier */
@@ -719,19 +721,34 @@ footer .wrap{display:flex;justify-content:space-between;gap:14px 30px;flex-wrap:
   var cyw,syw,cp,spp;
   function projTo(p,o){var x1=p.x*cyw+p.z*syw,z1=-p.x*syw+p.z*cyw,y2=p.y*cp-z1*spp,z2=p.y*spp+z1*cp,s=F/(F-z2);o.x=cx+x1*R*s;o.y=cy-y2*R*s;o.z=z2;o.s=s;return o}
   function label(txt,x,y,a,align){ctx.textAlign=align||'left';ctx.lineWidth=3;ctx.strokeStyle='rgba(6,11,18,'+(a*.9).toFixed(3)+')';ctx.strokeText(txt,x,y);ctx.fillStyle='rgba(231,237,240,'+a.toFixed(3)+')';ctx.fillText(txt,x,y)}
-  // station names + RUOTA. Front labels claim their spot first; a label that would collide slides up or down out of the way (eased, no popping).
+  // how hidden a station is behind the core: 0 in the open, 1 when it sits behind the wheel. Continuous, so nothing pops.
+  function occOf(pr){if(pr.sz>=0)return 0;var dx=pr.sx-cx,dy=pr.sy-cy,d=Math.sqrt(dx*dx+dy*dy),rr=wr*1.6*1.3;if(d>=rr)return 0;
+    return Math.min(1,(rr-d)/(wr*.5))*Math.min(1,-pr.sz/.12)}
+  // station names + RUOTA. RUOTA is fixed under the wheel. Station labels claim space by priority (the open one, then front to back);
+  // a label that would hit RUOTA, another station, a label already placed, or (for a station behind the core) the wheel tries its other side,
+  // then moves down, else fades out. The open product always keeps its label.
   var LB=[],LP=[];
+  function hitAt(l,r,t,b,np,pr){for(var i=0;i<np;i++){var o=LP[i];if(o.o===pr||(o.o===1&&pr.sz>=0))continue;if(r>o.l&&l<o.r&&b>o.t&&t<o.b)return o}return null}
   function labels(fs,fade,coreA,ell){
     ctx.lineWidth=1;ctx.font='700 '+fs+'px JetBrains Mono,ui-monospace,monospace';ctx.textBaseline='middle';
-    var u=Math.max(.75,Math.min(1.3,R/150)),h=fs*.6+3,ry=cy+wr*1.45*ell+fs*1.15,rw=ctx.measureText('RUOTA').width/2,np=1;
-    LP[0]={l:cx-rw,r:cx+rw,t:ry-h,b:ry+h};
-    LB.length=0;OUT.forEach(function(pr){LB.push(pr)});LB.sort(function(a,b){return b.sz-a.sz});
-    LB.forEach(function(pr){var isSel=openId&&sel===pr,dim=openId?(isSel?1:.35):1,dep=(pr.sz+1)/2,ss=pr.s*u,nm=pr.name.toUpperCase(),tw=ctx.measureText(nm).width,flip=pr.sx+24*ss+tw>W-8,
-        x=flip?pr.sx-24*ss:pr.sx+24*ss,y=pr.sy-21*ss,l=flip?x-tw:x,r=l+tw,dy=0,i,o,moved=true,pass;
-      for(pass=0;pass<4&&moved;pass++){moved=false;for(i=0;i<np;i++){o=LP[i];if(r>o.l&&l<o.r&&y+dy+h>o.t&&y+dy-h<o.b){dy=(y+dy<(o.t+o.b)/2)?o.t-h-y:o.b+h-y;moved=true}}}
-      if(pr.ldy===undefined||mq.matches)pr.ldy=dy;else pr.ldy+=(dy-pr.ldy)*.2;
-      var yy=y+pr.ldy;LP[np++]={l:l,r:r,t:yy-h,b:yy+h};
-      label(nm,x,yy,fade*dim*(pr.sz<-.3?.22:(.55+.45*dep)),flip?'right':'left')});
+    var u=Math.max(.75,Math.min(1.3,R/150)),h=fs*.6+3,ry=cy+wr*1.45*ell+fs*1.15+4,rw=ctx.measureText('RUOTA').width/2,wx=wr*1.5,np=2;
+    LP[0]={l:cx-rw,r:cx+rw,t:ry-h,b:ry+h,o:0};LP[1]={l:cx-wx,r:cx+wx,t:cy-wx*ell,b:cy+wx*ell,o:1};
+    OUT.forEach(function(pr){var rr=18*pr.s*u;LP[np++]={l:pr.sx-rr,r:pr.sx+rr,t:pr.sy-rr,b:pr.sy+rr,o:pr}});
+    LB.length=0;OUT.forEach(function(pr){LB.push(pr)});
+    LB.sort(function(a,b){var sa=openId&&sel===a?1:0,sb=openId&&sel===b?1:0;return sa!==sb?sb-sa:b.sz-a.sz});
+    LB.forEach(function(pr){var isSel=openId&&sel===pr,dim=openId?(isSel?1:.35):1,dep=(pr.sz+1)/2,ss=pr.s*u,nm=pr.name.toUpperCase(),tw=ctx.measureText(nm).width,
+        g=24*ss,y0=pr.sy-21*ss,occ=pr.occ||0,side=pr.side||0,pick=null,ph,k,si,s,l,y,o;
+      // phase 0: as placed; phase 1: slide down past whatever is in the way (at most a few label heights)
+      for(ph=0;ph<2&&!pick;ph++)for(k=0;k<2&&!pick;k++){s=k?1-side:side;l=s?pr.sx-g-tw:pr.sx+g;if(l<8||l+tw>W-8)continue;
+        y=y0;o=hitAt(l,l+tw,y-h,y+h,np,pr);
+        if(ph)for(si=0;si<4&&o;si++){y=o.b+h+1;o=hitAt(l,l+tw,y-h,y+h,np,pr)}
+        if(!o&&y-y0<=h*5)pick={s:s,l:l,y:y}}
+      if(!pick&&isSel){s=pr.sx+g+tw>W-8?1:0;pick={s:s,l:s?pr.sx-g-tw:pr.sx+g,y:y0}}
+      var vis=pick&&occ<.5?1:0;
+      if(pick){pr.side=pick.s;if(pr.lx===undefined||mq.matches){pr.lx=pick.l;pr.ly=pick.y}else{pr.lx+=(pick.l-pr.lx)*.2;pr.ly+=(pick.y-pr.ly)*.2}
+        if(vis)LP[np++]={l:pick.l,r:pick.l+tw,t:pick.y-h,b:pick.y+h,o:2,n:pr}}
+      if(pr.lv===undefined||mq.matches)pr.lv=vis;else pr.lv+=(vis-pr.lv)*.2;
+      if(pr.lx!==undefined&&pr.lv>.01)label(nm,pr.lx,pr.ly,fade*dim*(pr.sz<-.3?.22:(.55+.45*dep))*pr.lv*(1-occ),'left')});
     label('RUOTA',cx,ry,coreA*(.8+CORE.hot*.2),'center');ctx.textAlign='left'}
 
   function draw(now){
@@ -740,7 +757,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:14px 30px;flex-wrap:
     var cx0=slotR.x+slotR.w/2,cy0=slotR.y+slotR.h/2-so,R0=Math.min(slotR.w,slotR.h)*.4;
     var cxo=desk?(W-Math.min(540,W*.46))/2:W/2,cyo=desk?H*.5:H*.19,Ro=desk?Math.min(H*.3,W*.2):Math.min(W*.3,H*.12);
     var coreSel=openId&&sel===CORE,zoomK=coreSel?1.5:2.15;
-    cx=cx0+(cxo-cx0)*z;cy=cy0+(cyo-cy0)*z;R=R0+(Ro*zoomK-R0)*z;F=3-1.2*z;
+    cx=cx0+(cxo-cx0)*z;cy=cy0+(cyo-cy0)*z;R=R0+(Ro*zoomK-R0)*z;F=3-1.2*z;wr=R*(.2+.06*z);
     var u=Math.max(.75,Math.min(1.3,R/150)),fade=zt?1:Math.max(0,1-so/(Math.max(slotR.y+slotR.h,400)*1.1));
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
     if(fade<=0.01)return;
@@ -800,9 +817,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:14px 30px;flex-wrap:
 
     // stations: spokes into the core, then the station
     var fs=Math.round(12*Math.min(1.25,u)*(1+z*.4));
-    OUT.forEach(function(pr,pi){q=projTo(pr.o,pr);pr.sx=q.x;pr.sy=q.y;pr.sz=q.z;
+    OUT.forEach(function(pr,pi){q=projTo(pr.o,pr);pr.sx=q.x;pr.sy=q.y;pr.sz=q.z;pr.occ=occOf(pr);
       var isSel=openId&&sel===pr,dim=openId?(isSel?1:.3):1,sp=pr.live?SP.mint:SP.amb,col=pr.live?'79,209,161':'229,181,74',dep=(q.z+1)/2;
-      al=fade*dim*(.4+.6*dep);
+      al=fade*dim*(.4+.6*dep)*(1-.8*pr.occ);
       ctx.strokeStyle='rgba('+col+','+(al*.16).toFixed(3)+')';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(q.x,q.y);ctx.lineTo(cx,cy);ctx.stroke();
       pr.spk.forEach(function(sk){var t=ease(sk.t),hx=q.x+(cx-q.x)*t,hy=q.y+(cy-q.y)*t,tt=Math.max(0,t-.22),tx=q.x+(cx-q.x)*tt,ty=q.y+(cy-q.y)*tt;
         ctx.strokeStyle='rgba('+col+','+(al*.85).toFixed(3)+')';ctx.lineWidth=2.2*u;ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(hx,hy);ctx.stroke();glow(sp,hx,hy,11*u,al);glow(SP.wht,hx,hy,3.5*u,al)});
@@ -921,8 +938,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:14px 30px;flex-wrap:
         quad(fl.q.x,fl.q.y,(1.6+fl.sz*1.6)*u*fl.q.s,col[0],col[1],col[2],fa);
         if(fl.sz>1.15)G(fl.q.x,fl.q.y,(6+fl.sz*3.5)*u*fl.q.s,fl.c==='vio'?C.vio:(fl.c==='cyan'?C.cyan:C.blue),coreA*(.14+.4*dep))}
       // stations (halos, spokes, packets); their rings and labels go on the overlay
-      OUT.forEach(function(pr,pi){q=projTo(pr.o,pr);pr.sx=q.x;pr.sy=q.y;pr.sz=q.z;
-        var isSel=openId&&sel===pr,dim=openId?(isSel?1:.3):1,sp=pr.live?C.mint:C.amb,dep=(q.z+1)/2;al=fade*dim*(.4+.6*dep);
+      OUT.forEach(function(pr,pi){q=projTo(pr.o,pr);pr.sx=q.x;pr.sy=q.y;pr.sz=q.z;pr.occ=occOf(pr);
+        var isSel=openId&&sel===pr,dim=openId?(isSel?1:.3):1,sp=pr.live?C.mint:C.amb,dep=(q.z+1)/2;al=fade*dim*(.4+.6*dep)*(1-.8*pr.occ);
         seg(q.x,q.y,cx,cy,1.2,sp[0],sp[1],sp[2],al*.18,al*.08);
         pr.spk.forEach(function(sk){var t=ease(sk.t),hx=q.x+(cx-q.x)*t,hy=q.y+(cy-q.y)*t,tt=Math.max(0,t-.22),tx=q.x+(cx-q.x)*tt,ty=q.y+(cy-q.y)*tt;
           seg(tx,ty,hx,hy,2.4*u,sp[0],sp[1],sp[2],al*.1,al*.9);G(hx,hy,12*u,sp,al);G(hx,hy,4*u,C.wht,al)});
@@ -950,7 +967,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:14px 30px;flex-wrap:
     ctx.globalCompositeOperation='source-over';ctx.lineCap='round';ctx.lineJoin='round';
     var fs=Math.round(12*Math.min(1.25,u)*(1+z*.4));
     // station rings
-    OUT.forEach(function(pr,pi){var isSel=openId&&sel===pr,dim=openId?(isSel?1:.3):1,col=pr.live?'79,209,161':'229,181,74',dep=(pr.sz+1)/2,ss=pr.s*u,hot=pr.hot;al=fade*dim*(.4+.6*dep);
+    OUT.forEach(function(pr,pi){var isSel=openId&&sel===pr,dim=openId?(isSel?1:.3):1,col=pr.live?'79,209,161':'229,181,74',dep=(pr.sz+1)/2,ss=pr.s*u,hot=pr.hot;al=fade*dim*(.4+.6*dep)*(1-.85*(pr.occ||0));
       ctx.globalAlpha=1;ctx.strokeStyle='rgba('+col+','+al.toFixed(3)+')';ctx.lineWidth=2;ctx.setLineDash(pr.live?[]:[4,4]);ctx.beginPath();ctx.arc(pr.sx,pr.sy,(14+hot*4)*ss,0,6.283);ctx.stroke();ctx.setLineDash([]);
       var pulse=(tm*.75+pi*.33)%1;ctx.strokeStyle='rgba('+col+','+((1-pulse)*(1-pulse)*.6*al).toFixed(3)+')';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(pr.sx,pr.sy,(17+pulse*30)*ss,0,6.283);ctx.stroke();
       if(isSel){ctx.strokeStyle='rgba(255,255,255,'+(.5+.35*Math.sin(tm*3)).toFixed(3)+')';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(pr.sx,pr.sy,(28+2*Math.sin(tm*3))*ss,0,6.283);ctx.stroke()}});

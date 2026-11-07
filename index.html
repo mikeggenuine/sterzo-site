@@ -715,6 +715,20 @@ footer .wrap{display:flex;justify-content:space-between;gap:14px 30px;flex-wrap:
   var cyw,syw,cp,spp;
   function projTo(p,o){var x1=p.x*cyw+p.z*syw,z1=-p.x*syw+p.z*cyw,y2=p.y*cp-z1*spp,z2=p.y*spp+z1*cp,s=F/(F-z2);o.x=cx+x1*R*s;o.y=cy-y2*R*s;o.z=z2;o.s=s;return o}
   function label(txt,x,y,a,align){ctx.textAlign=align||'left';ctx.lineWidth=3;ctx.strokeStyle='rgba(6,11,18,'+(a*.9).toFixed(3)+')';ctx.strokeText(txt,x,y);ctx.fillStyle='rgba(231,237,240,'+a.toFixed(3)+')';ctx.fillText(txt,x,y)}
+  // station names + RUOTA. Front labels claim their spot first; a label that would collide slides up or down out of the way (eased, no popping).
+  var LB=[],LP=[];
+  function labels(fs,fade,coreA,ell){
+    ctx.lineWidth=1;ctx.font='700 '+fs+'px JetBrains Mono,ui-monospace,monospace';ctx.textBaseline='middle';
+    var u=Math.max(.75,Math.min(1.3,R/150)),h=fs*.6+3,ry=cy+wr*1.45*ell+fs*1.15,rw=ctx.measureText('RUOTA').width/2,np=1;
+    LP[0]={l:cx-rw,r:cx+rw,t:ry-h,b:ry+h};
+    LB.length=0;OUT.forEach(function(pr){LB.push(pr)});LB.sort(function(a,b){return b.sz-a.sz});
+    LB.forEach(function(pr){var isSel=openId&&sel===pr,dim=openId?(isSel?1:.35):1,dep=(pr.sz+1)/2,ss=pr.s*u,nm=pr.name.toUpperCase(),tw=ctx.measureText(nm).width,flip=pr.sx+24*ss+tw>W-8,
+        x=flip?pr.sx-24*ss:pr.sx+24*ss,y=pr.sy-21*ss,l=flip?x-tw:x,r=l+tw,dy=0,i,o,moved=true,pass;
+      for(pass=0;pass<4&&moved;pass++){moved=false;for(i=0;i<np;i++){o=LP[i];if(r>o.l&&l<o.r&&y+dy+h>o.t&&y+dy-h<o.b){dy=(y+dy<(o.t+o.b)/2)?o.t-h-y:o.b+h-y;moved=true}}}
+      if(pr.ldy===undefined||mq.matches)pr.ldy=dy;else pr.ldy+=(dy-pr.ldy)*.2;
+      var yy=y+pr.ldy;LP[np++]={l:l,r:r,t:yy-h,b:yy+h};
+      label(nm,x,yy,fade*dim*(pr.sz<-.3?.22:(.55+.45*dep)),flip?'right':'left')});
+    label('RUOTA',cx,ry,coreA*(.8+CORE.hot*.2),'center');ctx.textAlign='left'}
 
   function draw(now){
     if(!W)return;
@@ -820,12 +834,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:14px 30px;flex-wrap:
       if(hot>.05){var lt=(tm*.7+pi*.25)%1,mx=(1-lt)*(1-lt)*qx+2*(1-lt)*lt*qx+lt*lt*lx,my=(1-lt)*(1-lt)*qy+2*(1-lt)*lt*cyy+lt*lt*ly;glow(SP.blue,mx,my,9*u,hot*fade)}})}
 
     // labels
-    ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.lineWidth=1;ctx.lineJoin='round';
-    ctx.font='700 '+fs+'px JetBrains Mono,ui-monospace,monospace';ctx.textBaseline='middle';
-    OUT.forEach(function(pr){var isSel=openId&&sel===pr,dim=openId?(isSel?1:.35):1,dep=(pr.sz+1)/2,ss=pr.s*u,nm=pr.name.toUpperCase(),tw=ctx.measureText(nm).width,flip=pr.sx+24*ss+tw>W-8;
-      label(nm,flip?pr.sx-24*ss:pr.sx+24*ss,pr.sy-21*ss,fade*dim*(pr.sz<-.3?.22:(.55+.45*dep)),flip?'right':'left')});
-    label('RUOTA',cx,cy+wr*1.45*Math.max(.4,Math.cos(pitch)*.82+.18)+fs*1.15,coreA*(.8+CORE.hot*.2),'center');
-    ctx.textAlign='left'}
+    ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.lineJoin='round';
+    labels(fs,fade,coreA,Math.max(.4,Math.cos(pitch)*.82+.18))}
 
   // ---- WebGL renderer: every glow, dot and line is a soft quad in one buffer, drawn in one call per frame.
   // The 2D canvas stays on top for the wheel, the station rings and the labels. If WebGL is missing, draw2D runs instead.
@@ -954,10 +964,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:14px 30px;flex-wrap:
     var cpulse=(tm*.7)%1;ctx.strokeStyle='rgba(79,209,161,'+((1-cpulse)*(1-cpulse)*.5*coreA).toFixed(3)+')';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,wr*(1.5+cpulse*1.1),0,6.283);ctx.stroke();
     if(coreSel){ctx.strokeStyle='rgba(255,255,255,'+(.5+.35*Math.sin(tm*3)).toFixed(3)+')';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,wr*(1.9+.06*Math.sin(tm*3)),0,6.283);ctx.stroke()}
     // labels
-    ctx.lineWidth=1;ctx.font='700 '+fs+'px JetBrains Mono,ui-monospace,monospace';ctx.textBaseline='middle';
-    OUT.forEach(function(pr){var isSel=openId&&sel===pr,dim=openId?(isSel?1:.35):1,dep=(pr.sz+1)/2,ss=pr.s*u,nm=pr.name.toUpperCase(),tw=ctx.measureText(nm).width,flip=pr.sx+24*ss+tw>W-8;
-      label(nm,flip?pr.sx-24*ss:pr.sx+24*ss,pr.sy-21*ss,fade*dim*(pr.sz<-.3?.22:(.55+.45*dep)),flip?'right':'left')});
-    label('RUOTA',cx,cy+wr*1.45*ell+fs*1.15,coreA*(.8+CORE.hot*.2),'center');ctx.textAlign='left'}
+    labels(fs,fade,coreA,ell)}
 
   function render(now){if(gl){drawGL(now);overlay(now)}else draw(now)}
 

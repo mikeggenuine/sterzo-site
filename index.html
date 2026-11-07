@@ -19,7 +19,9 @@
 <meta name="description" content="Sterzo Systems builds software for independent used-car dealers: Ruota, Rifinito, Stima and Valvola.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"></noscript>
 <style>
 /* Layout: a command deck. One dark world. First screen: headline left, a glowing orbit system (the Sterzo wheel at its core, four product stations on its rings) and four docked product plates, all without scrolling. Pick a plate or a station: the deck zooms in and a dossier opens. Below: the plain sections on dark glass. */
 :root{
@@ -92,7 +94,7 @@ h1 em{font-style:normal;color:var(--accent);text-shadow:0 0 28px rgba(138,162,25
 .plate:active{transform:translateY(-1px) scale(.99)}
 .plate .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .plate .n{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;color:var(--muted)}
-.plate h3{font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:1.9rem;line-height:.95;margin:0;letter-spacing:.02em}
+.plate .pn{display:block;font-family:var(--display);font-weight:900;text-transform:uppercase;font-size:1.9rem;line-height:.95;margin:0;letter-spacing:.02em}
 .plate p{margin:0;font-size:.86rem;color:var(--muted);line-height:1.35}
 .plate .dot{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 10px var(--live);flex:none}
 .plate .dot.dev{background:var(--dev);box-shadow:0 0 10px var(--dev)}
@@ -112,7 +114,7 @@ h1 em{font-style:normal;color:var(--accent);text-shadow:0 0 28px rgba(138,162,25
   .eb-x{display:none}
   .plates{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .plate{padding:11px 12px 10px;gap:4px}
-  .plate h3{font-size:1.5rem}
+  .plate .pn{font-size:1.5rem}
   .plate p{display:none}
   .plate .cat{display:none}
   .note{text-align:left;margin-top:8px}
@@ -639,7 +641,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:14px 30px;flex-wrap:
 
   PROD.forEach(function(pr){
     var li=document.createElement('li'),b=document.createElement('button');b.type='button';b.className='plate'+(pr.live?'':' ghost')+(pr.core?' core':'');b.id='plate-'+pr.id;
-    b.innerHTML='<div class="row"><span class="n">'+pr.num.replace(/ · (.*)$/,' <span class="cat">· $1</span>')+'</span><span class="st'+(pr.live?'':' dev')+'"><i class="dot'+(pr.live?'':' dev')+'"></i>'+(pr.live?'Live':'In dev')+'</span></div><h3>'+pr.name+'</h3><p>'+pr.short+'</p><span class="sheen" aria-hidden="true"></span>';
+    b.innerHTML='<div class="row"><span class="n">'+pr.num.replace(/ · (.*)$/,' <span class="cat">· $1</span>')+'</span><span class="st'+(pr.live?'':' dev')+'"><i class="dot'+(pr.live?'':' dev')+'"></i>'+(pr.live?'Live':'In dev')+'</span></div><span class="pn">'+pr.name+'</span><p>'+pr.short+'</p><span class="sheen" aria-hidden="true"></span>';
     b.addEventListener('click',function(){openProduct(pr,false)});
     b.addEventListener('pointerenter',function(){hover=pr});b.addEventListener('pointerleave',function(){if(hover===pr)hover=null});
     b.addEventListener('focus',function(){hover=pr});b.addEventListener('blur',function(){if(hover===pr)hover=null});
